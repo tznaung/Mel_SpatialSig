@@ -9,7 +9,6 @@ S100B_Sig_sm = read.csv("final_coeffs_S100B_sm.csv")
 CD45_Sig_sm = read.csv("final_coeffs_CD45_sm.csv")
 CD68_Sig_sm = read.csv("final_coeffs_CD68_sm.csv")
 pBulk_Sig_sm = read.csv("final_coeffs_pseudoBulk_sm.csv")
-pStroma_Sig_sm = read.csv("final_coeffs_pseudoStroma_sm.csv")
 
 # load data to test
 
