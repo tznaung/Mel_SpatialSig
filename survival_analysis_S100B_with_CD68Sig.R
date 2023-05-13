@@ -1,0 +1,111 @@
+library("survminer")
+library("ggplot2")
+require("survival")
+library(glmnet)
+library(pheatmap)
+library(RColorBrewer)
+library(tidyverse)
+library(edgeR)
+library(pROC)
+
+S100B_df = read.csv("S100B_av.csv", header = T)
+S100B_df$SpotID <- S100B_df$X
+Res_S100B = read.csv("S100B_response_table.csv", header = T)
+Res_S100B$SpotID <- Res_S100B$ROI_ID_2
+S100B_2 = merge(S100B_df, Res_S100B, by = "SpotID", all = FALSE)
+S100B_2$group <- S100B_2$response # define the group you want to compare
+data = S100B_2[,3:9286]
+prop_test = 0.20
+idx0 = which(S100B_2$group=="no")
+idx1 = which(S100B_2$group=="yes")
+
+final_coeffs = read.csv("final_coeffs_CD45.csv")
+# final_coeffs_2 = final_coeffs[2:14,]
+final_genes = final_coeffs$X[2:dim(final_coeffs)[1]]
+nGene = length(final_genes)
+
+train_data =  S100B_2
+train_data2 = train_data[,3:9286]
+train_data3 = train_data[,which(colnames(train_data) %in% final_genes)]
+final_genes_2 = colnames(train_data3)
+nGene_2 = length(final_genes_2)
+# final_coeffs_2 = final_coeffs[-c(3,16,17,24),]
+train_data3$response = train_data$response
+train_data3$time = train_data$OS_FROM_START_OF_ITX
+train_data3$VITAL = train_data$VITAL
+
+train_data3$lasso_scores = matrix(0,dim(train_data3)[1],1)
+for(i in 1:dim(train_data3)[1]){
+  train_data3$lasso_scores[i] = sum(as.matrix(train_data3[i,1:nGene_2])*(final_coeffs$s0[2:dim(final_coeffs)[1]]))
+} 
+
+## heatmap
+
+#pdf(file = paste("output_split_S100B_final.pdf", sep=""))
+
+# Training set 
+train_data4 = train_data3[,1:length(final_genes_2)]
+train_data5 <- log2(train_data4)
+rownames(train_data5) = train_data$X
+#  sapply(rownames(train_data4),function(x) 
+#  strsplit(as.character(x),split = "\\\\")[[1]][1])
+train_data5 <- train_data5[order(train_data$response),]
+train_data6 = data.frame("Response" = sort(train_data$response))
+rownames(train_data6) = rownames(train_data5)
+#rownames(train_data4) = train_data5$Response # name matching
+pheatmap(train_data5,annotation_row = train_data6, main = "Signature genes S100B Comp",
+         cluster_rows = T, color = colorRampPalette(rev(brewer.pal(n = 11, name ="RdYlGn")))(15),
+         # cutree_cols = 2,
+         cutree_rows = 4, 
+         fontsize = 8)
+# pheatmap(train_data4,annotation_row = train_data5, main = "Signature genes for S100B comp",
+#          cluster_rows = F, color = colorRampPalette(rev(brewer.pal(n = 11, name ="RdYlGn")))(15),
+#          cutree_cols = 2,
+#          #cutree_rows = 3, 
+#          fontsize = 8)
+
+#dev.off()
+
+#Finding the optimal cutpoin
+library(pROC)
+library(cutpointr)
+
+Beta <- cutpointr(train_data3, lasso_scores, VITAL, 
+                  method = maximize_metric, metric = sum_sens_spec)
+summary(Beta)
+plot(Beta)
+
+#train_data3$binary_score = (train_data3$lasso_scores>=Beta$optimal_cutpoint)
+#train_data3$binary_score = (train_data3$lasso_scores>=median(train_data3$lasso_scores))
+train_data3$binary_score = (train_data3$lasso_scores>=quantile(train_data3$lasso_scores,probs=0.66))
+train_data3$binary_resp = (train_data3$response == "yes")
+
+# survival curve
+
+fit <- survfit(Surv(time, VITAL) ~ binary_score, data = train_data3)
+fit$n.risk
+# Plot informative survival curves
+A = ggsurvplot(fit, data = train_data3,
+           title = "S100B compartment w/ CD45 signatures",
+           pval = F, pval.method = TRUE,    # Add p-value &  method name
+           surv.median.line = "hv",            # Add median survival lines
+           legend.title = "Lasso",               # Change legend titles
+           legend.labs = c("Low", "High"),  # Change legend labels
+           palette = "lancet",                    # Use JCO journal color palette
+           risk.table = TRUE,                  # Add No at risk table
+           cumevents = FALSE,                  # Add cumulative No of events table
+           tables.height = 0.15,               # Specify tables height
+           tables.theme = theme_cleantable(),  # Clean theme for tables
+           tables.y.text = FALSE               # Hide tables y axis text
+)
+# find the hazard ratio with this function.
+cox <- coxph(Surv(time, VITAL) ~ binary_score, data = train_data3)
+cox
+ggforest(cox)
+A$plot <- A$plot+ 
+  ggplot2::annotate("text", 
+                    x = 1000, y = 0.25, # x and y coordinates of the text
+                    label = "HR = 1.1 (0.47-2.7) \n p = 0.805", size = 4)
+A
+
+# S100B Compartment with CD45 Signatures
