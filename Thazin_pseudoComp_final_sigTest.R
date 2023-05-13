@@ -12,13 +12,13 @@ library(lmtest)
 clinInfo = read.csv("pseudoBulk_response_table.csv", header = T)
 names(clinInfo)[2] = "patient"
 
-# data_S100B = read.csv("pseudo_S100B_mat_3.csv", header = TRUE, row.names = 1)
-# data_CD68 = read.csv("pseudo_CD68_mat_3.csv", header = TRUE, row.names = 1)
-# data_CD45 = read.csv("pseudo_CD45_mat_3.csv", header = TRUE, row.names = 1)
+# data_S100B = read.csv("pseudo_S100B_decon.csv", header = TRUE, row.names = 1)
+# data_CD68 = read.csv("pseudo_CD68_decon.csv", header = TRUE, row.names = 1)
+# data_CD45 = read.csv("pseudo_CD45_decon.csv", header = TRUE, row.names = 1)
 
-data_S100B = read.csv("pseudo_S100B_mat_3_new.csv", header = TRUE, row.names = 1)
-data_CD68 = read.csv("pseudo_CD68_mat_3_new.csv", header = TRUE, row.names = 1)
-data_CD45 = read.csv("pseudo_CD45_mat_3_new.csv", header = TRUE, row.names = 1)
+data_S100B = read.csv("pseudo_S100B_mat_decon.csv", header = TRUE, row.names = 1)
+data_CD68 = read.csv("pseudo_CD68_mat_decon.csv", header = TRUE, row.names = 1)
+data_CD45 = read.csv("pseudo_CD45_mat_decon.csv", header = TRUE, row.names = 1)
 data_Stroma = data_CD68 + data_CD45
 
 data_S100B[is.na(data_S100B)] = 0
