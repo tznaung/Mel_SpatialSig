@@ -1,9 +1,9 @@
 library(pheatmap)
 library(RColorBrewer)
 
-CD68 = read.csv("filter_5%_LOQ_CD68.csv", header = T)
-CD45 = read.csv("filter_5%_LOQ_CD45.csv", header = T)
-S100B = read.csv("filter_5%_LOQ_S100B.csv", header = T)
+CD68 = read.csv("filter_10%_LOQ_CD68.csv", header = T)
+CD45 = read.csv("filter_10%_LOQ_CD45.csv", header = T)
+S100B = read.csv("filter_10%_LOQ_S100B.csv", header = T)
 
 #get the average counts of both blocks and combine CD45 and CD68 to get stroma compartment
 dim1 = dim(CD45)[1]
