@@ -13,3 +13,10 @@ Software Requirements
 The CRAN packages should be compatible with Windows, Mac, and Linux operating systems. The packages have been tested on macOS: Monterey version 12.6.3
 
 Before setting up the R packages, users should have RSTUDIO-2023.03.1-446 or higher, and several packages set up from CRAN.
+
+# Installation Guide:
+
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("PackageName")
